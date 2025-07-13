@@ -1,61 +1,63 @@
-# Audio Engineering Node.js TypeScript Instructions
 
-Instructions for building high-performance audio engineering applications with Node.js, TypeScript, and real-time audio processing capabilities. Optimized for low-latency audio analysis, mixer integration, and AI-powered coaching systems.
+# Audio Engineering Blazor MAUI Hybrid Instructions
+
+Instructions for building high-performance audio engineering applications with .NET MAUI, Blazor Hybrid, and C#. Optimized for low-latency audio analysis, mixer integration, and professional-grade audio workflows on desktop and mobile.
 
 ## Project Context
 
-• Node.js with TypeScript for real-time audio processing and analysis
-• Electron + React for professional audio engineering desktop interface
+• .NET MAUI with Blazor Hybrid for cross-platform desktop/mobile audio engineering UI
+• C# for real-time audio processing and analysis
 • Performance-critical audio processing with <10ms latency requirements
 • Integration with professional audio mixers via OSC protocol (M32/X32)
 • Real-time spectrum analysis, harshness detection, and AI-powered coaching
 • Multi-channel audio recording and playback capabilities
-• DANTE/Core Audio integration for professional audio interfaces
+• Core Audio/ASIO/WASAPI integration for professional audio interfaces
 
 ## Development Standards
 
 ### Audio Processing Performance
 
-• **Async/Await for Audio I/O**: Use async patterns for all audio device operations to avoid blocking the main thread
-• **Web Workers for DSP**: Offload CPU-intensive audio analysis (FFT, spectrum analysis) to Web Workers
-• **Optimized Audio Buffers**: Use Float32Array for audio data - it's optimized for WebAudio API and reduces memory allocation
+• **Async/Await for Audio I/O**: Use async patterns for all audio device operations to avoid blocking the UI thread
+• **Background Services for DSP**: Offload CPU-intensive audio analysis (FFT, spectrum analysis) to background threads or Task.Run
+• **Optimized Audio Buffers**: Use `Span<float>`/`Memory<float>` for audio data to minimize allocations and maximize performance
 • **Circular Buffers**: Implement ring buffers for real-time audio streaming to minimize garbage collection
-• **Audio Context Management**: Reuse AudioContext instances and properly suspend/resume to manage resources
+• **Audio Context Management**: Reuse audio engine instances and properly dispose/suspend to manage resources
 • **Sample Rate Optimization**: Match processing sample rates to hardware to avoid expensive resampling
 
-### TypeScript Audio-Specific Types
+### C# Audio-Specific Types
 
-• **Audio Parameter Interfaces**: Define strict interfaces for all audio parameters (gain, frequency, Q-factor)
+• **Audio Parameter Interfaces**: Define strict interfaces/classes for all audio parameters (gain, frequency, Q-factor)
 
-```typescript
-interface AudioChannel {
-  readonly id: number;
-  gain: DecibelValue; // Branded type for type safety
-  eq: EQBand[];
-  muted: boolean;
-  solo: boolean;
+```csharp
+public interface IAudioChannel
+{
+    int Id { get; }
+    DecibelValue Gain { get; set; } // Branded type for type safety
+    List<EQBand> Eq { get; set; }
+    bool Muted { get; set; }
+    bool Solo { get; set; }
 }
 ```
 
-• **Branded Types for Audio Units**: Use branded types for frequency (Hz), decibels (dB), and time (ms) to prevent unit confusion
+• **Branded Types for Audio Units**: Use custom structs for frequency (Hz), decibels (dB), and time (ms) to prevent unit confusion
 • **Generic Audio Processing**: Implement generic types for audio processing pipelines and effects chains
 • **OSC Protocol Types**: Define exact types for mixer OSC commands and responses
-• **Audio Format Validation**: Use type guards for validating audio sample rates, bit depths, and channel configurations
+• **Audio Format Validation**: Use type-safe validation for audio sample rates, bit depths, and channel configurations
 
 ### Real-Time Audio UI Components
 
-• **Memoized Spectrum Components**: Use React.memo for spectrum analyzers and level meters that update at 60fps
-• **Optimized Event Handlers**: Use useCallback for audio parameter change handlers to prevent unnecessary re-renders
-• **Audio-Specific Custom Hooks**: Create hooks like `useAudioLevel`, `useSpectrumData`, `useMixerConnection`
+• **Memoized Spectrum Components**: Use `@key` and efficient rendering patterns for spectrum analyzers and level meters that update at 60fps
+• **Optimized Event Handlers**: Use `EventCallback` and `Action` delegates for audio parameter change handlers to prevent unnecessary re-renders
+• **Audio-Specific Custom Components**: Create reusable components like `<AudioLevelMeter>`, `<SpectrumDisplay>`, `<MixerConnection>`
 • **Debounced Audio Controls**: Implement debouncing for continuous controls (faders, knobs) to reduce processing overhead
-• **Canvas-Based Visualizations**: Use Canvas API instead of DOM elements for high-frequency audio visualizations
+• **Canvas-Based Visualizations**: Use SkiaSharp or MAUI.Graphics for high-frequency audio visualizations
 • **Virtualized Audio Lists**: Use virtualization for channel strips and large mixer surfaces
 
 ### Memory Management for Audio
 
 • **Audio Buffer Pooling**: Reuse audio buffer objects to minimize garbage collection during real-time processing
-• **Cleanup Audio Resources**: Always dispose of AudioNodes, MediaStreams, and Worker threads on component unmount
-• **WeakMap for Audio References**: Use WeakMap to store audio node references without preventing garbage collection
+• **Cleanup Audio Resources**: Always dispose of audio engines, streams, and background threads on component disposal
+• **WeakReference for Audio References**: Use `WeakReference<T>` to store audio node references without preventing garbage collection
 • **Monitor Audio Memory Usage**: Track heap usage during audio processing and implement memory pressure handling
 • **Streaming Audio I/O**: Use streams for large audio file operations to avoid loading entire files into memory
 
@@ -77,7 +79,7 @@ interface AudioChannel {
 
 ### Audio File Management
 
-• **Streaming Recording**: Use Node.js streams for multi-track recording to handle large files efficiently
+• **Streaming Recording**: Use .NET streams for multi-track recording to handle large files efficiently
 • **Audio Format Support**: Support professional formats (WAV, AIFF, BWF) with proper metadata handling
 • **Metadata Preservation**: Maintain audio metadata (timecode, track names, markers) throughout processing
 • **Concurrent File Operations**: Handle multiple simultaneous recordings without blocking
@@ -93,26 +95,26 @@ interface AudioChannel {
 
 ## Framework-Specific Guidelines
 
-### Node.js Audio Processing
+### .NET MAUI Audio Processing
 
-• **Avoid Blocking Operations**: Never use synchronous file operations (readFileSync) in audio processing paths
-• **Use Native Modules**: Leverage native audio modules (node-portaudio, node-speaker) for optimal performance
-• **Worker Thread Pool**: Implement a worker thread pool for parallel audio analysis tasks
-• **Event Loop Monitoring**: Monitor event loop lag during audio processing and adjust workload accordingly
+• **Avoid Blocking Operations**: Never use synchronous file operations in audio processing paths
+• **Use Native Modules**: Leverage native audio libraries (NAudio, CoreAudio, WASAPI, ASIO) for optimal performance
+• **Task-Based Parallelism**: Use `Task.Run` or background services for parallel audio analysis tasks
+• **UI Thread Safety**: Use `MainThread.BeginInvokeOnMainThread` for UI updates from background audio threads
 • **Process Priority**: Set higher process priority for audio applications when possible
 
-### React Audio Components
+### Blazor Audio Components
 
-• **Audio State Management**: Use Context API for global audio state (mixer settings, recording status)
-• **Component Optimization**: Use React.memo for all audio visualization components
+• **Audio State Management**: Use Cascading Parameters or Dependency Injection for global audio state (mixer settings, recording status)
+• **Component Optimization**: Use `@key` and efficient rendering for all audio visualization components
 • **Effect Cleanup**: Always cleanup audio-related effects and event listeners
 • **Error Boundaries**: Implement audio-specific error boundaries for graceful failure handling
-• **Suspense for Audio Loading**: Use Suspense for loading audio resources and mixer connections
+• **Suspense for Audio Loading**: Use loading indicators for audio resources and mixer connections
 
-### Electron Audio Integration
+### MAUI/Blazor Audio Integration
 
-• **Main Process Audio**: Handle audio device enumeration and low-level operations in the main process
-• **IPC Audio Communication**: Use efficient IPC patterns for audio data between main and renderer processes
+• **Main Process Audio**: Handle audio device enumeration and low-level operations in the main process or platform-specific services
+• **IPC Audio Communication**: Use efficient messaging patterns for audio data between .NET MAUI and Blazor components
 • **Native Menu Integration**: Provide audio controls in native menus for better user experience
 • **System Audio Integration**: Integrate with system audio routing and device management
 • **Auto-Updater Considerations**: Handle audio processing during application updates gracefully
@@ -135,18 +137,18 @@ interface AudioChannel {
 
 ## Common Audio Pitfalls
 
-• Using DOM updates for high-frequency audio visualizations (use Canvas instead)
-• Not cleaning up AudioContext and MediaStream resources
-• Blocking the main thread with synchronous audio operations
+• Using UI thread for high-frequency audio visualizations (use SkiaSharp/Canvas instead)
+• Not cleaning up audio engine and stream resources
+• Blocking the UI thread with synchronous audio operations
 • Insufficient error handling for audio device changes
 • Not implementing proper audio buffer management
 • Ignoring audio latency and jitter in processing chains
 
 ## Audio Performance Troubleshooting
 
-• Use Chrome DevTools' Performance tab to identify audio processing bottlenecks
+• Use Visual Studio Profiler or dotTrace to identify audio processing bottlenecks
 • Monitor audio thread priority and CPU affinity
-• Use audio-specific profiling tools (Web Audio Inspector, audio buffer analyzers)
+• Use audio-specific profiling tools (NAudio analyzers, custom logging)
 • Implement real-time audio performance dashboards
 • Log audio processing timing for offline analysis
 
@@ -162,7 +164,7 @@ interface AudioChannel {
 ## Code Review Checklist for Audio Applications
 
 □ Are audio buffers properly sized and managed?
-□ Is audio processing happening off the main thread?
+□ Is audio processing happening off the UI thread?
 □ Are all audio resources cleaned up properly?
 □ Is error handling comprehensive for device disconnections?
 □ Are audio parameters properly typed and validated?
@@ -176,74 +178,73 @@ interface AudioChannel {
 
 ### Example 1: Optimized Audio Buffer Processing
 
-```typescript
-// BAD: Synchronous processing blocking main thread
-function processAudio(inputBuffer: Float32Array): Float32Array {
-  return performFFT(inputBuffer); // Blocks main thread
+```csharp
+// BAD: Synchronous processing blocking UI thread
+public float[] ProcessAudio(float[] inputBuffer)
+{
+    return PerformFFT(inputBuffer); // Blocks UI thread
 }
 
-// GOOD: Worker-based processing
-class AudioProcessor {
-  private worker: Worker;
-
-  async processAudio(inputBuffer: Float32Array): Promise<Float32Array> {
-    return new Promise((resolve) => {
-      this.worker.postMessage({ buffer: inputBuffer });
-      this.worker.onmessage = (e) => resolve(e.data.result);
-    });
-  }
+// GOOD: Background thread-based processing
+public class AudioProcessor
+{
+    public async Task<float[]> ProcessAudioAsync(float[] inputBuffer)
+    {
+        return await Task.Run(() => PerformFFT(inputBuffer));
+    }
 }
 ```
 
 ### Example 2: Efficient Mixer Parameter Updates
 
-```typescript
+```csharp
 // BAD: Immediate OSC commands for every parameter change
-slider.onChange = (value) => {
-  mixer.sendOSC(`/ch/01/mix/fader ${value}`);
+slider.ValueChanged += (s, e) =>
+{
+    mixer.SendOSC($"/ch/01/mix/fader {e.NewValue}");
 };
 
 // GOOD: Debounced parameter updates
-const debouncedUpdate = useMemo(
-  () =>
-    debounce((value: number) => {
-      mixer.sendOSC(`/ch/01/mix/fader ${value}`);
-    }, 50),
-  [mixer]
-);
+private readonly Debouncer _debouncer = new Debouncer(50);
+slider.ValueChanged += (s, e) =>
+{
+    _debouncer.Debounce(() => mixer.SendOSC($"/ch/01/mix/fader {e.NewValue}"));
+};
 ```
 
 ### Example 3: Memory-Efficient Audio Visualization
 
-```typescript
+```csharp
 // BAD: Creating new canvas elements for each frame
-function updateSpectrum(data: Float32Array) {
-  const canvas = document.createElement("canvas");
-  // Process and render...
+void UpdateSpectrum(float[] data)
+{
+    var canvas = new SKCanvas(new SKBitmap(800, 200));
+    // Process and render...
 }
 
 // GOOD: Reusing canvas context with efficient rendering
-class SpectrumDisplay {
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
+class SpectrumDisplay
+{
+    private SKCanvas _canvas;
+    private SKBitmap _bitmap;
 
-  updateSpectrum(data: Float32Array) {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    // Efficient rendering using existing context...
-  }
+    public void UpdateSpectrum(float[] data)
+    {
+        _canvas.Clear();
+        // Efficient rendering using existing context...
+    }
 }
 ```
 
 ## References and Further Reading
 
-• [Web Audio API Specification](https://webaudio.github.io/web-audio-api/)
-• [Node.js Audio Processing Best Practices](https://nodejs.org/en/docs/guides/simple-profiling/)
+• [.NET MAUI Documentation](https://learn.microsoft.com/en-us/dotnet/maui/)
+• [Blazor Hybrid Documentation](https://learn.microsoft.com/en-us/aspnet/core/blazor/hybrid/)
+• [NAudio Library](https://github.com/naudio/NAudio)
 • [OSC Protocol Specification](http://opensoundcontrol.org/spec-1_0)
 • [Professional Audio Development Guidelines](https://www.aes.org/standards/)
-• [Real-Time Audio Programming](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Advanced_techniques)
-• [TypeScript Audio Type Definitions](https://github.com/DefinitelyTyped/DefinitelyTyped)
-• [Electron Audio Integration](https://www.electronjs.org/docs/latest/api/desktop-capturer)
-• [React Performance Optimization](https://react.dev/learn/render-and-commit)
+• [Real-Time Audio Programming in .NET](https://github.com/naudio/NAudio)
+• [SkiaSharp for Graphics](https://learn.microsoft.com/en-us/dotnet/maui/user-interface/graphics/skia)
 
 ## Conclusion
 
