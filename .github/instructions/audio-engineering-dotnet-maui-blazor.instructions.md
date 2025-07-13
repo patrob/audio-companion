@@ -1,4 +1,3 @@
-
 # Audio Engineering Blazor MAUI Hybrid Instructions
 
 Instructions for building high-performance audio engineering applications with .NET MAUI, Blazor Hybrid, and C#. Optimized for low-latency audio analysis, mixer integration, and professional-grade audio workflows on desktop and mobile.
@@ -249,4 +248,3 @@ class SpectrumDisplay
 ## Conclusion
 
 Audio engineering applications demand the highest performance standards. Always prioritize real-time performance, implement comprehensive error handling, and maintain professional audio standards. Use these guidelines to build responsive, reliable, and professional-grade audio applications that audio engineers can depend on in critical situations.
-
