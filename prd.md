@@ -56,33 +56,29 @@ A real-time audio analysis tool that helps audio engineers identify vocal harshn
 
 ### 3.1 Technology Stack
 
-- **Runtime**: Node.js with TypeScript
+- **Runtime**: .NET 9 with C#
+- **App Framework**: .NET MAUI with Blazor Hybrid (cross-platform desktop app)
 - **Audio Processing**:
-  - `node-portaudio` for Core Audio interface
-  - `fft-js` or `ml-fft` for spectrum analysis
-  - `web-audio-api` polyfill for audio processing
-- **UI Framework**: Electron + React/Vue for desktop app
+  - Native Core Audio integration via .NET bindings (e.g., CoreAudioKit, NAudio, or custom interop)
+  - FFT and DSP using C# libraries (e.g., Math.NET Numerics, custom DSP)
+- **UI Framework**: Blazor Hybrid (Razor components) with MAUI for native controls
 - **Visualization**:
-  - Canvas API for spectrum display
-  - Chart.js or D3.js for meters
-- **Real-time Processing**: Web Workers for audio analysis
+  - SkiaSharp or Microsoft.Maui.Graphics for spectrum and meters
+  - Custom Blazor components for interactive UI
+- **Real-time Processing**: Background threads/tasks in .NET for audio analysis
 
 ### 3.2 Core Audio Integration
 
-```typescript
-interface AudioInputDevice {
-  id: string;
-  name: string;
-  channels: number;
-  sampleRate: number;
-}
+```csharp
+public record AudioInputDevice(string Id, string Name, int Channels, int SampleRate);
 
-interface AudioProcessor {
-  selectDevice(deviceId: string): Promise<void>;
-  startProcessing(): void;
-  stopProcessing(): void;
-  getSpectrum(): Float32Array;
-  getLevel(): { peak: number; rms: number };
+public interface IAudioProcessor
+{
+    Task SelectDeviceAsync(string deviceId);
+    void StartProcessing();
+    void StopProcessing();
+    float[] GetSpectrum();
+    (float Peak, float Rms) GetLevel();
 }
 ```
 
@@ -146,42 +142,44 @@ Audio Input → Core Audio → Buffer → FFT Analysis → Spectrum Data → UI 
 
 ```
 audio-companion/
+├── AudioCompanion.sln
 ├── src/
-│   ├── audio/
-│   │   ├── inputManager.ts
-│   │   ├── spectrumAnalyzer.ts
-│   │   ├── levelMeter.ts
-│   │   └── harshnessDetector.ts
-│   ├── ui/
-│   │   ├── components/
-│   │   ├── spectrum/
-│   │   └── meters/
-│   ├── templates/
-│   │   └── mixingPresets.ts
-│   └── main.ts
-├── package.json
-└── tsconfig.json
+│   ├── AudioCompanion.App/           # .NET MAUI Blazor Hybrid app project
+│   │   ├── Audio/
+│   │   │   ├── InputManager.cs
+│   │   │   ├── SpectrumAnalyzer.cs
+│   │   │   ├── LevelMeter.cs
+│   │   │   └── HarshnessDetector.cs
+│   │   ├── UI/
+│   │   │   ├── Components/
+│   │   │   ├── Spectrum/
+│   │   │   └── Meters/
+│   │   ├── Templates/
+│   │   │   └── MixingPresets.cs
+│   │   ├── Main.razor
+│   │   └── ...
+├── tests/
+│   └── AudioCompanion.Tests/         # xUnit/NUnit/MSTest test project
+└── README.md
 ```
 
 ## 7. Dependencies
 
 ### 7.1 Core Dependencies
 
-```json
-{
-  "portaudio": "^2.0.0",
-  "fft-js": "^1.0.0",
-  "electron": "^22.0.0",
-  "typescript": "^4.9.0",
-  "react": "^18.0.0"
-}
-```
+- **.NET 9 SDK**
+- **.NET MAUI** (for cross-platform UI)
+- **Blazor Hybrid** (for web/native UI integration)
+- **SkiaSharp** or **Microsoft.Maui.Graphics** (for custom drawing/visualization)
+- **Math.NET Numerics** (for FFT and DSP)
+- **CoreAudioKit** or custom Core Audio interop (for macOS audio device access)
+- **xUnit/NUnit/MSTest** (for unit testing)
 
 ### 7.2 Audio Processing Libraries
 
-- **FFT Analysis**: Fast Fourier Transform for spectrum analysis
-- **Audio Buffer Management**: Circular buffers for real-time processing
-- **Core Audio Bindings**: Native macOS audio device access
+- **FFT & DSP**: Math.NET Numerics or custom C# implementation
+- **Audio Buffer Management**: Custom C# circular buffer
+- **Core Audio Bindings**: CoreAudioKit, NAudio, or custom P/Invoke for macOS
 
 ## 8. Development Phases
 
@@ -234,18 +232,29 @@ audio-companion/
 
 ## Getting Started
 
+
 ### Prerequisites
 
-- macOS 10.14+ (for Core Audio support)
-- Node.js 16+ with TypeScript
-- Xcode Command Line Tools
+- macOS 12+ (for Core Audio and .NET MAUI support)
+- .NET 9 SDK
+- Visual Studio 2022+ (with MAUI workload)
+- Xcode Command Line Tools (for building on macOS)
 
 ### Initial Setup
 
 ```bash
-npm init -y
-npm install --save portaudio fft-js electron react
-npm install --save-dev typescript @types/node electron-builder
+
+# Install .NET 9 SDK and MAUI workload
+dotnet workload install maui
+
+# Clone the repo and restore dependencies
+git clone <repo-url>
+cd audio-companion
+dotnet restore
+
+# Build and run the app
+dotnet build src/AudioCompanion.App/AudioCompanion.App.csproj
+dotnet run --project src/AudioCompanion.App/AudioCompanion.App.csproj
 ```
 
 This MVP focuses on core functionality that audio engineers need most: real-time spectrum analysis, harshness detection, and visual feedback for better mixing decisions.
