@@ -1,0 +1,41 @@
+﻿@page "/"
+
+<h1>Audio Companion</h1>
+
+<div class="top-bar">
+    <label for="deviceSelect">Audio Input Device:</label>
+    <select id="deviceSelect" @bind="selectedDeviceId">
+        <option value="">-- Select Device --</option>
+        @foreach (var device in devices)
+        {
+            <option value="@device.Id">@device.Name</option>
+        }
+    </select>
+</div>
+
+<div class="center-panel">
+    <h3>Spectrum Analyzer (Placeholder)</h3>
+    <div class="spectrum-placeholder">[Spectrum Visualization]</div>
+</div>
+
+<div class="right-panel">
+    <h3>Level Meter (Placeholder)</h3>
+    <div class="level-meter-placeholder">[Level Meter]</div>
+</div>
+
+@code {
+    private List<AudioCompanion.Shared.Audio.AudioInputDevice> devices = new();
+
+    private string? selectedDeviceId;
+
+    [Inject]
+    public AudioCompanion.Shared.Audio.IAudioInputManager? InputManager { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (InputManager is not null)
+        {
+            devices = await InputManager.EnumerateDevicesAsync();
+        }
+    }
+}

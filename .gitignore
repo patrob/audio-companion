@@ -1,0 +1,86 @@
+# .NET build outputs
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+.history/
+
+# Visual Studio for Mac
+.vscode/
+.idea/
+*.userprefs
+
+# Rider
+.idea/
+*.sln.iml
+
+# MAUI/Blazor/VS
+*.vs/
+.vs/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Test results
+TestResults/
+
+# NuGet
+*.nupkg
+.nuget/
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Logs
+*.log
+
+# Others
+*.dbmdl
+*.dbmdl-journal
+*.pidb
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.VC.VC.opendb
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# Backup & temp
+*~
+*.tmp
+*.bak
+*.swp
+
+# Local secrets
+secrets.json
+appsettings.Development.json
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Build directories
+build/
