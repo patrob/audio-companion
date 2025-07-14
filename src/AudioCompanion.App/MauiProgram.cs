@@ -16,6 +16,9 @@ public static class MauiProgram
 
 		builder.Services.AddMauiBlazorWebView();
 
+		// Register audio services
+		builder.Services.AddSingleton<AudioCompanion.Shared.Audio.IAudioProcessor, AudioCompanion.Shared.Audio.AudioProcessor>();
+
 #if MACCATALYST || MACOS
 		builder.Services.AddSingleton<AudioCompanion.Shared.Audio.IAudioInputManager, AudioCompanion.App.Audio.MacAudioInputManager>();
 #endif

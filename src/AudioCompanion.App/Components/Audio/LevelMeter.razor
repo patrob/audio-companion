@@ -1,0 +1,29 @@
+@using Microsoft.AspNetCore.Components
+
+<div class="level-meter">
+    <div class="meter-label">@Label</div>
+    <div class="meter-bar">
+        <div class="meter-fill" style="width: @GetMeterWidth()%"></div>
+    </div>
+    <div class="meter-value">@FormatValue()</div>
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public float Value { get; set; } = 0f;
+    [Parameter] public float MinValue { get; set; } = -60f;
+    [Parameter] public float MaxValue { get; set; } = 0f;
+
+    private double GetMeterWidth()
+    {
+        if (Value <= MinValue) return 0;
+        if (Value >= MaxValue) return 100;
+        
+        return ((Value - MinValue) / (MaxValue - MinValue)) * 100;
+    }
+
+    private string FormatValue()
+    {
+        return Value > -59f ? $"{Value:F1} dB" : "-∞ dB";
+    }
+}

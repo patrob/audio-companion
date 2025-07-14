@@ -1,0 +1,45 @@
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@inject IJSRuntime JSRuntime
+
+<div class="spectrum-analyzer" @ref="canvasContainer">
+    <canvas @ref="canvas" class="spectrum-canvas" width="800" height="300"></canvas>
+</div>
+
+@code {
+    private ElementReference canvas;
+    private ElementReference canvasContainer;
+    private float[] currentSpectrum = Array.Empty<float>();
+    private bool isInitialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeCanvas();
+            isInitialized = true;
+        }
+    }
+
+    private async Task InitializeCanvas()
+    {
+        await JSRuntime.InvokeVoidAsync("initializeSpectrumCanvas", canvas);
+    }
+
+    public async Task UpdateSpectrum(float[] spectrum)
+    {
+        if (!isInitialized || spectrum == null || spectrum.Length == 0)
+            return;
+
+        currentSpectrum = spectrum;
+        await JSRuntime.InvokeVoidAsync("updateSpectrum", canvas, spectrum);
+    }
+
+    public async Task Clear()
+    {
+        if (isInitialized)
+        {
+            await JSRuntime.InvokeVoidAsync("clearSpectrum", canvas);
+        }
+    }
+}

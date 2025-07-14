@@ -1,35 +1,140 @@
 ﻿@page "/"
+@using AudioCompanion.Shared.Audio
 
-<h1>Audio Companion</h1>
+<div class="dashboard">
+    <!-- Controls Panel -->
+    <div class="controls-panel">
+        <div class="form-group">
+            <label class="form-label" for="deviceSelect">Audio Input Device:</label>
+            <select id="deviceSelect" class="form-control" @bind="selectedDeviceId" @bind:after="OnDeviceChanged">
+                <option value="">-- Select Device --</option>
+                @foreach (var device in devices)
+                {
+                    <option value="@device.Id">@device.Name (@device.Channels ch, @device.SampleRate Hz)</option>
+                }
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="sampleRate">Sample Rate:</label>
+            <select id="sampleRate" class="form-control" @bind="selectedSampleRate">
+                <option value="44100">44.1 kHz</option>
+                <option value="48000">48 kHz</option>
+                <option value="96000">96 kHz</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="bufferSize">Buffer Size:</label>
+            <select id="bufferSize" class="form-control" @bind="selectedBufferSize">
+                <option value="64">64 samples</option>
+                <option value="128">128 samples</option>
+                <option value="256">256 samples</option>
+                <option value="512">512 samples</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            @if (isProcessing)
+            {
+                <button class="btn btn-secondary" @onclick="StopProcessing">Stop</button>
+            }
+            else
+            {
+                <button class="btn btn-primary" @onclick="StartProcessing" disabled="@(string.IsNullOrEmpty(selectedDeviceId))">Start</button>
+            }
+        </div>
+    </div>
 
-<div class="top-bar">
-    <label for="deviceSelect">Audio Input Device:</label>
-    <select id="deviceSelect" @bind="selectedDeviceId">
-        <option value="">-- Select Device --</option>
-        @foreach (var device in devices)
-        {
-            <option value="@device.Id">@device.Name</option>
-        }
-    </select>
-</div>
+    <!-- Spectrum Analyzer Panel -->
+    <div class="spectrum-panel">
+        <h4>Spectrum Analyzer</h4>
+        <div class="spectrum-container">
+            <SpectrumAnalyzer @ref="spectrumAnalyzer" />
+        </div>
+    </div>
 
-<div class="center-panel">
-    <h3>Spectrum Analyzer (Placeholder)</h3>
-    <div class="spectrum-placeholder">[Spectrum Visualization]</div>
-</div>
+    <!-- Meters Panel -->
+    <div class="meters-panel">
+        <h4>Level Meters</h4>
+        <LevelMeter Label="Peak" Value="@peakLevel" />
+        <LevelMeter Label="RMS" Value="@rmsLevel" />
+        <LevelMeter Label="LUFS" Value="@lufsLevel" />
+        
+        <h4>Harshness Detection</h4>
+        <div class="harshness-alerts">
+            @foreach (var alert in harshnessAlerts)
+            {
+                <div class="alert @GetAlertClass(alert.Severity)">
+                    @alert.Message
+                </div>
+            }
+            @if (!harshnessAlerts.Any())
+            {
+                <div class="alert alert-success">
+                    Signal sounds clean
+                </div>
+            }
+        </div>
+    </div>
 
-<div class="right-panel">
-    <h3>Level Meter (Placeholder)</h3>
-    <div class="level-meter-placeholder">[Level Meter]</div>
+    <!-- Analysis Panel -->
+    <div class="analysis-panel">
+        <h4>Frequency Analysis</h4>
+        <div class="frequency-bands">
+            <div class="frequency-band">
+                <span class="band-label">Sub Bass (20-60 Hz):</span>
+                <span class="band-value">@subBassLevel dB</span>
+            </div>
+            <div class="frequency-band">
+                <span class="band-label">Bass (60-250 Hz):</span>
+                <span class="band-value">@bassLevel dB</span>
+            </div>
+            <div class="frequency-band">
+                <span class="band-label">Mids (250-4k Hz):</span>
+                <span class="band-value">@midsLevel dB</span>
+            </div>
+            <div class="frequency-band">
+                <span class="band-label">Presence (4-8k Hz):</span>
+                <span class="band-value">@presenceLevel dB</span>
+            </div>
+            <div class="frequency-band">
+                <span class="band-label">Treble (8-20k Hz):</span>
+                <span class="band-value">@trebleLevel dB</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
-    private List<AudioCompanion.Shared.Audio.AudioInputDevice> devices = new();
-
+    private List<AudioInputDevice> devices = new();
     private string? selectedDeviceId;
+    private int selectedSampleRate = 48000;
+    private int selectedBufferSize = 256;
+    private bool isProcessing = false;
+    
+    // Level meter values
+    private float peakLevel = 0f;
+    private float rmsLevel = 0f;
+    private float lufsLevel = 0f;
+    
+    // Frequency band levels
+    private float subBassLevel = -60f;
+    private float bassLevel = -60f;
+    private float midsLevel = -60f;
+    private float presenceLevel = -60f;
+    private float trebleLevel = -60f;
+    
+    // Harshness alerts
+    private List<HarshnessAlert> harshnessAlerts = new();
+    
+    private SpectrumAnalyzer? spectrumAnalyzer;
 
     [Inject]
-    public AudioCompanion.Shared.Audio.IAudioInputManager? InputManager { get; set; }
+    public IAudioInputManager? InputManager { get; set; }
+    
+    [Inject]
+    public IAudioProcessor? AudioProcessor { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -38,4 +143,146 @@
             devices = await InputManager.EnumerateDevicesAsync();
         }
     }
+
+    private async Task OnDeviceChanged()
+    {
+        if (isProcessing)
+        {
+            await StopProcessing();
+        }
+    }
+
+    private async Task StartProcessing()
+    {
+        if (string.IsNullOrEmpty(selectedDeviceId) || AudioProcessor is null)
+            return;
+
+        try
+        {
+            await AudioProcessor.SelectDeviceAsync(selectedDeviceId);
+            AudioProcessor.StartProcessing();
+            isProcessing = true;
+            
+            // Start the audio processing loop
+            _ = Task.Run(ProcessAudioLoop);
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Console.WriteLine($"Error starting audio processing: {ex.Message}");
+        }
+    }
+
+    private async Task StopProcessing()
+    {
+        if (AudioProcessor is not null && isProcessing)
+        {
+            AudioProcessor.StopProcessing();
+            isProcessing = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ProcessAudioLoop()
+    {
+        while (isProcessing && AudioProcessor is not null)
+        {
+            try
+            {
+                // Get spectrum data
+                var spectrum = AudioProcessor.GetSpectrum();
+                if (spectrumAnalyzer is not null)
+                {
+                    await spectrumAnalyzer.UpdateSpectrum(spectrum);
+                }
+                
+                // Get level data
+                var levels = AudioProcessor.GetLevel();
+                peakLevel = levels.Peak;
+                rmsLevel = levels.Rms;
+                
+                // Update frequency bands
+                UpdateFrequencyBands(spectrum);
+                
+                // Check for harshness
+                UpdateHarshnessDetection(spectrum);
+                
+                await InvokeAsync(StateHasChanged);
+                
+                // 60 FPS update rate
+                await Task.Delay(16);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in audio processing loop: {ex.Message}");
+                break;
+            }
+        }
+    }
+
+    private void UpdateFrequencyBands(float[] spectrum)
+    {
+        // Simplified frequency band analysis
+        // In real implementation, these would map to specific FFT bins
+        if (spectrum.Length > 0)
+        {
+            var length = spectrum.Length;
+            subBassLevel = CalculateBandLevel(spectrum, 0, length / 32);
+            bassLevel = CalculateBandLevel(spectrum, length / 32, length / 8);
+            midsLevel = CalculateBandLevel(spectrum, length / 8, length / 2);
+            presenceLevel = CalculateBandLevel(spectrum, length / 2, 3 * length / 4);
+            trebleLevel = CalculateBandLevel(spectrum, 3 * length / 4, length);
+        }
+    }
+
+    private float CalculateBandLevel(float[] spectrum, int startBin, int endBin)
+    {
+        if (startBin >= endBin || endBin > spectrum.Length)
+            return -60f;
+            
+        float sum = 0f;
+        int count = 0;
+        
+        for (int i = startBin; i < endBin; i++)
+        {
+            sum += spectrum[i];
+            count++;
+        }
+        
+        if (count == 0) return -60f;
+        
+        float average = sum / count;
+        return average > 0 ? 20 * MathF.Log10(average) : -60f;
+    }
+
+    private void UpdateHarshnessDetection(float[] spectrum)
+    {
+        harshnessAlerts.Clear();
+        
+        // Check for excessive presence frequencies (simplified)
+        if (presenceLevel > -6f)
+        {
+            harshnessAlerts.Add(new HarshnessAlert("High presence detected - potential harshness", "warning"));
+        }
+        
+        if (presenceLevel > 0f)
+        {
+            harshnessAlerts.Add(new HarshnessAlert("Excessive presence - harsh frequencies detected!", "danger"));
+        }
+        
+        // Check for sibilance
+        if (trebleLevel > -3f)
+        {
+            harshnessAlerts.Add(new HarshnessAlert("Potential sibilance in high frequencies", "warning"));
+        }
+    }
+
+    private string GetAlertClass(string severity) => severity switch
+    {
+        "warning" => "alert-warning",
+        "danger" => "alert-danger",
+        _ => "alert-success"
+    };
+
+    public record HarshnessAlert(string Message, string Severity);
 }
