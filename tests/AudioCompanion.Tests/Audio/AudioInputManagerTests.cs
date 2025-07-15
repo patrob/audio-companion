@@ -2,6 +2,7 @@ using Xunit;
 using AudioCompanion.Shared.Audio;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Shouldly;
 
 namespace AudioCompanion.Tests.Audio
 {
@@ -17,8 +18,8 @@ namespace AudioCompanion.Tests.Audio
             var devices = await manager.EnumerateDevicesAsync();
 
             // Assert
-            Assert.NotNull(devices);
-            Assert.NotEmpty(devices);
+            devices.ShouldNotBeNull();
+            devices.ShouldNotBeEmpty();
         }
     }
 

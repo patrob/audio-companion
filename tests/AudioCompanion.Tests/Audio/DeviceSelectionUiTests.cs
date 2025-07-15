@@ -2,6 +2,7 @@ using Xunit;
 using AudioCompanion.Shared.Audio;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Shouldly;
 
 namespace AudioCompanion.Tests.Audio
 {
@@ -15,8 +16,8 @@ namespace AudioCompanion.Tests.Audio
             var devices = await fakeManager.EnumerateDevicesAsync();
 
             // Assert
-            Assert.NotEmpty(devices);
-            Assert.Contains(devices, d => d.Name == "Built-in Mic");
+            devices.ShouldNotBeEmpty();
+            devices.ShouldContain(d => d.Name == "Built-in Mic");
         }
 
         private class FakeAudioInputManager : IAudioInputManager
